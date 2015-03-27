@@ -12,17 +12,19 @@ class Tablero (dificultadN: Int) {
   var T = ofDim[Char](sizeX, sizeY)
   
   
-  for (i <- 0 to sizeX) {
-    for (j <- 0 to sizeY) {
+  for (i <- 0 to sizeX - 1) {
+    for (j <- 0 to sizeY - 1) {
       T(i)(j) = colores(rnd.nextInt(dificultad(dificultadN)));
     }
   }
   
   def print(){
-    for(i <- 0 to sizeX){
-      for(j <- 0 to sizeY){
+    for(i <- 0 to sizeX - 1){
+      printf("[")
+      for(j <- 0 to sizeY - 1){
         printf(T(i)(j).toString())
       }
+      println("]")
     }
   }
 }
