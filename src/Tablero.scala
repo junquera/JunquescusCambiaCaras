@@ -33,12 +33,16 @@ class Tablero(tabla: List[List[Char]]) {
 
   def print() = {
     for (x <- tabla) {
-      printf("[")
+      printf("[ ")
       for (y <- x) {
-        printf(y.toString())
+        printf(y.toString()+" ")
       }
       println("]")
     }
   }
+  
+  
+
+
 
 }
