@@ -1,25 +1,44 @@
+package com.CambiaCarasAPA
+
 import scala.util.Random
+import java.util.Scanner;
 
 class Juego(dificultadN: Int) {
 
+  val rnd = new Random()
   val colores = 'A' :: 'N' :: 'R' :: 'V' :: 'M' :: 'G' :: 'B' :: Nil
   val dificultad = 3 :: 5 :: 7 :: Nil
-  val rnd = new Random()
-  val sizeX = 8
-  val sizeY = 8
+  var puntosJugador = 0
+  var puntosMaquina = 0
 
-  var puntos = 0
+  def parsePoint(puntos: String): List[Integer] = {
+    return List(puntos(1).toInt - 48, puntos(3).toInt - 48, puntos(6).toInt - 48, puntos(8).toInt - 48)
+  }
 
-  /**
-   * Imprime el contenido de una tabla de juego
-   */
-  def print(tabla: List[List[Char]]) = {
-    for (x <- 0 to tabla.size - 1) {
-      printf("[ ")
-      for (y <- 0 to tabla(x).size - 1) {
-        printf(tabla(y)(x) + " ")
+  def jugar(tabla: List[List[Char]]): List[List[Char]] = {
+
+    //Métodos de pintar
+    println("#########################\n")
+    printTabla(tabla)
+    println(this.puntosJugador + " puntos acumulados!\n")
+    print("Próximo movimiento de la forma \"(x1,y1)(x2,y2)\" ")
+
+    val sc = new Scanner(System.in)
+    val toExchange = parsePoint(sc.next())
+    print("\n")
+    val intercambio = exchange(tabla, toExchange(0), toExchange(1), toExchange(2), toExchange(3))
+    if (intercambio.equals(turno(intercambio, false))) {
+      print("Movimiento sin intercambio!\n")
+      val sugerencia = find_move(tabla)
+      if (sugerencia != Nil) {
+        print("Puedes probar con (" + sugerencia(0) + "," + sugerencia(1) + ")(" + sugerencia(2) + "," + sugerencia(3) + ")\n")
+        return jugar(tabla)
+      } else {
+        return jugar(tabla)
       }
-      println("]")
+    } else {
+      println("Buena esa!")
+      return jugar(turno(intercambio, false))
     }
   }
 
@@ -27,22 +46,31 @@ class Juego(dificultadN: Int) {
    * Método que se ejecutará cada turno y llamará a los métodos de juego. Se llama a
    * sí mismo de forma recursiva hasta que, tras la jugada, no hay fichas que eliminar
    */
-  def turno(tabla: List[List[Char]]): List[List[Char]] = {
-    val aux = juegaTurno(tabla)
+  def turno(tabla: List[List[Char]], maquina: Boolean): List[List[Char]] = {
+    val aux = juegaTurno(tabla, maquina)
     if (aux.equals(tabla))
       return tabla
     else
-      return turno(aux)
+      return turno(aux, maquina)
   }
 
   /**
    *  Método de juego. Analiza la tabla, marca con 0 las fichas que hay que eliminar, añade puntos
    *  al juego y elimina los elementos, rellenando los huecos que queden con colores aleatorios
    */
-  def juegaTurno(tabla: List[List[Char]]): List[List[Char]] = {
+  def juegaTurno(tabla: List[List[Char]], maquina: Boolean): List[List[Char]] = {
     val tablaAnalizada = traspose(borraCoincidencias(traspose(borraCoincidencias(tabla))))
-    puntos.+(cuentaElementos('0', tablaAnalizada))
+    if (maquina)
+      this.puntosMaquina = puntosMaquina + (cuentaElementos('0', tablaAnalizada))
+    else
+      this.puntosJugador = puntosJugador + (cuentaElementos('0', tablaAnalizada))
     return compactaYRellena(traspose(borraCoincidencias(traspose(borraCoincidencias(tabla)))))
+  }
+
+  def limpiar(tabla: List[List[Char]]): List[List[Char]] = {
+    val aux = compactaYRellena(traspose(borraCoincidencias(traspose(borraCoincidencias(tabla)))))
+    if (aux.equals(tabla)) return tabla
+    else return limpiar(aux)
   }
 
   /**
@@ -63,6 +91,19 @@ class Juego(dificultadN: Int) {
       return Nil
     else
       return borraCoincidenciasLista(tabla.head) :: borraCoincidencias(tabla.tail)
+  }
+
+  /**
+   * Imprime el contenido de una tabla de juego
+   */
+  def printTabla(tabla: List[List[Char]]) = {
+    for (x <- tabla) {
+      printf("[ ")
+      for (y <- x) {
+        printf(y.toString() + " ")
+      }
+      println("]")
+    }
   }
 
   /**
@@ -136,12 +177,6 @@ class Juego(dificultadN: Int) {
   /**
    * Devuelve la lista más corta
    */
-  def shorter(l1: List[Char], l2: List[Char]): List[Char] = {
-    if (l1.length < l2.length)
-      return l1
-    else
-      return l2
-  }
 
   /**
    * Comprueba si todos los elementos de una lista son iguales
@@ -190,7 +225,7 @@ class Juego(dificultadN: Int) {
     if (lista.isEmpty)
       return 0
     else if (lista.head == c)
-      return 1.+(cuentaElementosLista(c, lista.tail))
+      return 1 + (cuentaElementosLista(c, lista.tail))
     else
       return cuentaElementosLista(c, lista.tail)
   }
@@ -221,18 +256,22 @@ class Juego(dificultadN: Int) {
 
   /**************** <EXCHANGE> *********************/
 
-  def exchange(tabla: List[List[Char]], x1: Integer, y1: Integer, x2: Integer, y2: Integer): List[List[Char]] = {
-    if (x1.equals(x2)) return exchange_vertical(tabla, x1, y1, x2, y2, 0, 0)
-    else if (y1.equals(y2)) return traspose(exchange_horizontal(traspose(tabla), y1, x1, y2, x2, 0, 0))
-    else return Nil
+  def exchange(tabla: List[List[Char]], x1: Int, y1: Int, x2: Int, y2: Int): List[List[Char]] = {
+    if (x1.equals(x2)) {
+      if (y1 < y2) return exchange_horizontal(tabla, x1, y1, x2, y2, 0, 0)
+      else return exchange_horizontal(tabla, x2, y2, x1, y1, 0, 0)
+    } else if (y1.equals(y2)) {
+      if (x1 < x2) return traspose(exchange_vertical(traspose(tabla), y1, x1, y2, x2, 0, 0))
+      else return traspose(exchange_vertical(traspose(tabla), y2, x2, y1, x1, 0, 0))
+    } else return Nil
   }
 
-  def exchange_vertical(tabla: List[List[Char]], x1: Integer, y1: Integer, x2: Integer, y2: Integer, xAct: Integer, yAct: Integer): List[List[Char]] = {
+  def exchange_vertical(tabla: List[List[Char]], x1: Int, y1: Int, x2: Int, y2: Int, xAct: Int, yAct: Int): List[List[Char]] = {
     if (xAct < x1) return tabla.head :: exchange_vertical(tabla.tail, x1, y1, x2, y2, xAct.+(1), yAct)
     else return exchange_row(tabla.head, y1, y2, 0) :: tabla.tail
   }
 
-  def exchange_horizontal(tabla: List[List[Char]], x1: Integer, y1: Integer, x2: Integer, y2: Integer, xAct: Integer, yAct: Integer): List[List[Char]] = {
+  def exchange_horizontal(tabla: List[List[Char]], x1: Int, y1: Int, x2: Int, y2: Int, xAct: Int, yAct: Int): List[List[Char]] = {
     if (xAct < x1) return tabla.head :: exchange_horizontal(tabla.tail, x1, y1, x2, y2, xAct.+(1), yAct)
     else return exchange_row(tabla.head, y1, y2, 0) :: tabla.tail
   }
@@ -281,6 +320,42 @@ class Juego(dificultadN: Int) {
       return check_vertical(trasposed.head, trasposed.tail, 0, 0)
     } else return Nil
   }
-  
+
   /********************* </CHECK> ****************************************/
+  def find_move(tabla: List[List[Char]]): List[Integer] = {
+    val moveH = find_move_horizontal(tabla.head, tabla.tail, 'H', 0, 0)
+    val trasposed = traspose(tabla)
+    val moveV = find_move_vertical(trasposed.head, trasposed.tail, 'V', 0, 0)
+    if (moveH != Nil) return moveH
+    else if (moveV != Nil) return moveV
+    else return Nil
+
+  }
+  //-----------------------------------------------------------------//
+  def find_move_horizontal(primera: List[Char], resto: List[List[Char]], tipo: Char, x: Integer, y: Integer): List[Integer] = {
+    if (primera.length >= 4)
+      if ((((primera take 4) filter (_.equals(primera.head))).length).equals(3)) return find_point((primera take 4), x, y, tipo)
+      else return find_move_horizontal(primera.tail, resto, tipo, x, y.+(1))
+    else if (resto.isEmpty) return Nil
+    else return find_move_horizontal(resto.head, resto.tail, tipo, x.+(1), 0)
+  }
+  //-----------------------------------------------------------------//
+  def find_move_vertical(primera: List[Char], resto: List[List[Char]], tipo: Char, x: Integer, y: Integer): List[Integer] = {
+    if (primera.length >= 4)
+      if ((((primera take 4) filter (_.equals(primera.head))).length).equals(3)) return find_point((primera take 4), x, y, tipo)
+      else return find_move_vertical(primera.tail, resto, tipo, x.+(1), y)
+    else if (resto.isEmpty) return Nil
+    else return find_move_vertical(resto.head, resto.tail, tipo, 0, y.+(1))
+  }
+  //-----------------------------------------------------------------//
+  def find_point(lista: List[Char], x: Integer, y: Integer, tipo: Char): List[Integer] = {
+    if (tipo.equals('V'))
+      if (!lista.head.equals(lista.tail.head)) return List(x, y, (x + 1), y)
+      else return List((x + 2), y, (x + 3), y)
+    else if (tipo.equals('H'))
+      if (!lista.head.equals(lista.tail.head)) return List(x, y, x, (y + 1))
+      else return List(x, y + 2, x, y + 3)
+    else return Nil
+  }
+
 }
