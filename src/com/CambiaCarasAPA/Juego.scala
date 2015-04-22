@@ -9,35 +9,57 @@ class Juego(dificultadN: Int) {
   val colores = 'A' :: 'N' :: 'R' :: 'V' :: 'M' :: 'G' :: 'B' :: Nil
   val dificultad = 3 :: 5 :: 7 :: Nil
   var puntosJugador = 0
-  var puntosMaquina = 0
 
   def parsePoint(puntos: String): List[Integer] = {
     return List(puntos(1).toInt - 48, puntos(3).toInt - 48, puntos(6).toInt - 48, puntos(8).toInt - 48)
   }
 
+  def jugar(tabla: List[List[Char]]): List[List[Char]] = {
 
+    //Métodos de pintar
+    println("#########################\n")
+    printTabla(tabla)
+    println(this.puntosJugador + " puntos acumulados!\n")
+    print("Próximo movimiento de la forma \"(x1,y1)(x2,y2)\" ")
+
+    val sc = new Scanner(System.in)
+    val toExchange = parsePoint(sc.next())
+    print("\n")
+    val intercambio = exchange(tabla, toExchange(0), toExchange(1), toExchange(2), toExchange(3))
+    if (intercambio.equals(turno(intercambio))) {
+      print("Movimiento sin intercambio!\n")
+      val sugerencia = find_move(tabla)
+      if (sugerencia != Nil) {
+        print("Puedes probar con (" + sugerencia(0) + "," + sugerencia(1) + ")(" + sugerencia(2) + "," + sugerencia(3) + ")\n")
+        return jugar(tabla)
+      } else {
+        return jugar(tabla)
+      }
+    } else {
+      println("Buena esa!")
+      return jugar(turno(intercambio))
+    }
+  }
   /**
    * Método que se ejecutará cada turno y llamará a los métodos de juego. Se llama a
    * sí mismo de forma recursiva hasta que, tras la jugada, no hay fichas que eliminar
    */
-  def turno(tabla: List[List[Char]], maquina: Boolean): List[List[Char]] = {
-    val aux = juegaTurno(tabla, maquina)
+  def turno(tabla: List[List[Char]]): List[List[Char]] = {
+    val aux = juegaTurno(tabla)
     if (aux.equals(tabla))
       return tabla
     else
-      return turno(aux, maquina)
+      return turno(aux)
   }
 
   /**
    *  Método de juego. Analiza la tabla, marca con 0 las fichas que hay que eliminar, añade puntos
    *  al juego y elimina los elementos, rellenando los huecos que queden con colores aleatorios
    */
-  def juegaTurno(tabla: List[List[Char]], maquina: Boolean): List[List[Char]] = {
+  def juegaTurno(tabla: List[List[Char]]): List[List[Char]] = {
     val tablaAnalizada = traspose(borraCoincidencias(traspose(borraCoincidencias(tabla))))
-    if (maquina)
-      this.puntosMaquina = puntosMaquina + (cuentaElementos('0', tablaAnalizada))
-    else
-      this.puntosJugador = puntosJugador + (cuentaElementos('0', tablaAnalizada))
+
+    this.puntosJugador = puntosJugador + (cuentaElementos('0', tablaAnalizada))
     return compactaYRellena(traspose(borraCoincidencias(traspose(borraCoincidencias(tabla)))))
   }
 
@@ -147,22 +169,20 @@ class Juego(dificultadN: Int) {
     else
       return c :: nuevaLista(c, n.-(1))
   }
-  
-  
 
   /**
    * determina si un intercambio es válido
    */
-  
-  def isValid(x1:Int,y1:Int,x2:Int,y2:Int): Boolean = {
-    if(x1.equals(x2))
-      if(Math.abs((y2-y1)).equals(1)) return true
+
+  def isValid(x1: Int, y1: Int, x2: Int, y2: Int): Boolean = {
+    if (x1.equals(x2))
+      if (Math.abs((y2 - y1)).equals(1)) return true
       else return false
-    if(y1.equals(y2))
-      if(Math.abs((x2-x1)).equals(1)) return true
+    if (y1.equals(y2))
+      if (Math.abs((x2 - x1)).equals(1)) return true
       else return false
     else return false
-    
+
   }
 
   /**
