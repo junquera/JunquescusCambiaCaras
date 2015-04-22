@@ -15,32 +15,6 @@ class Juego(dificultadN: Int) {
     return List(puntos(1).toInt - 48, puntos(3).toInt - 48, puntos(6).toInt - 48, puntos(8).toInt - 48)
   }
 
-  def jugar(tabla: List[List[Char]]): List[List[Char]] = {
-
-    //Métodos de pintar
-    println("#########################\n")
-    printTabla(tabla)
-    println(this.puntosJugador + " puntos acumulados!\n")
-    print("Próximo movimiento de la forma \"(x1,y1)(x2,y2)\" ")
-
-    val sc = new Scanner(System.in)
-    val toExchange = parsePoint(sc.next())
-    print("\n")
-    val intercambio = exchange(tabla, toExchange(0), toExchange(1), toExchange(2), toExchange(3))
-    if (intercambio.equals(turno(intercambio, false))) {
-      print("Movimiento sin intercambio!\n")
-      val sugerencia = find_move(tabla)
-      if (sugerencia != Nil) {
-        print("Puedes probar con (" + sugerencia(0) + "," + sugerencia(1) + ")(" + sugerencia(2) + "," + sugerencia(3) + ")\n")
-        return jugar(tabla)
-      } else {
-        return jugar(tabla)
-      }
-    } else {
-      println("Buena esa!")
-      return jugar(turno(intercambio, false))
-    }
-  }
 
   /**
    * Método que se ejecutará cada turno y llamará a los métodos de juego. Se llama a
@@ -173,10 +147,23 @@ class Juego(dificultadN: Int) {
     else
       return c :: nuevaLista(c, n.-(1))
   }
+  
+  
 
   /**
-   * Devuelve la lista más corta
+   * determina si un intercambio es válido
    */
+  
+  def isValid(x1:Int,y1:Int,x2:Int,y2:Int): Boolean = {
+    if(x1.equals(x2))
+      if(Math.abs((y2-y1)).equals(1)) return true
+      else return false
+    if(y1.equals(y2))
+      if(Math.abs((x2-x1)).equals(1)) return true
+      else return false
+    else return false
+    
+  }
 
   /**
    * Comprueba si todos los elementos de una lista son iguales
