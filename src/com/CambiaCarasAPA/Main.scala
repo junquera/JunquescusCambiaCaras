@@ -1,7 +1,7 @@
 package com.CambiaCarasAPA
 import java.util.Scanner;
 
-class CambiaCaras {
+object CambiaCaras {
   def main(args: Array[String]) {
     print("Escoja dificultad del 1 al 3: ")
 
